@@ -1,14 +1,13 @@
 import os
 from flask import Flask, make_response, render_template, flash, request, redirect, url_for, send_from_directory, Request
 from werkzeug.utils import secure_filename
-
+import random
 
 UPLOAD_FOLDER = "uploads/"
 ALLOWED_EXT = {'png', 'jpg', 'jpeg', 'bmp', 'tiff', 'tif' }
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-# app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.secret_key = b'_flklmlfw\n.xwdw/'
 PORT=8000
 
@@ -19,18 +18,23 @@ def allowed_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
-        ID=0
+        ID=random.randint(1, 10000000)
         if request.method == 'POST':
                 # check if the post request has the file part
                 if 'files[]' not in request.files:
                         return 'Error: No file is chosen... Please upload a valid file. '
 
                 files = request.files.getlist('files[]')
-                outputDir = os.path.join(app.config['UPLOAD_FOLDER'], str(ID))
                 outputID = str(ID)
-                if not os.path.exists(outputDir):
-                        os.mkdir(outputDir)
+                outputDir = os.path.join(app.config['UPLOAD_FOLDER'], outputID)
+                if os.path.exists(outputDir):
                         ID+=1
+                        outputID = str(ID)
+                        outputDir = os.path.join(app.config['UPLOAD_FOLDER'], outputID)
+                        os.mkdir(outputDir, exist_ok=True)
+                else:
+                        os.mkdir(outputDir)
+                        
                 for file in files:
                         if file and allowed_file(file.filename):
                                 filename = secure_filename(file.filename)
@@ -51,6 +55,7 @@ def upload_file():
         <div class="container">
         <h1 class="display-4">3D Point Cloud Generation Tool</h1>
         <p class="lead">Take a few overlapping images of an object and upload them to get a 3D point cloud using structure from motion </p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/vOnf5x7MeRI" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         <p>Accepted file extensions are: <b>jpg, jpeg, png, bmp, tif/tiff</b></p>
         <p><b>Note</b>: It might take a while to run 3D reconstruction on your images, so please be patient and only click upload once :)</p>
         <form method="post" action="/" enctype="multipart/form-data">
@@ -74,4 +79,4 @@ def uploaded_file(filename):
 
 
 if __name__ == '__main__':
-	app.run(debug=False, host='0.0.0.0', port=PORT, use_debugger=True)
+	app.run(debug=False, host='0.0.0.0', port=PORT, use_debugger=False)
